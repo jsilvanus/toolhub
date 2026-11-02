@@ -33,8 +33,13 @@
 - [x] JSDoc types for `manifest` / `createRouter(ctx)`
 - [x] Module mounting under `{basePath}/<slug>/`
 - [x] Example module
-- [ ] `manifestUrl` periodic overlay (title/description)
+- [x] `manifestUrl` periodic overlay (title/description)
 
 ## Later
 - [ ] Per-group instances inside tools
 - [ ] Runtime plugin loading (if ever needed)
+
+## Tunnus relying party
+- [x] `OIDC_CLIENT_AUTH` (post | basic)
+- [x] Public `/auth/signed-out` page for post-logout redirect
+- [x] Real sign-in verified against Tunnus (see docs/tunnus.md)

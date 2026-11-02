@@ -16,6 +16,7 @@ export const DEFAULT_LABELS = {
   guides: 'Guides',
   noTools: 'No tools are available to you yet.',
   signedInAs: 'Signed in as',
+  signedOut: 'You have been signed out.',
   back: 'Back',
   forbidden: 'You do not have access to this page.',
   notFound: 'Not found',
