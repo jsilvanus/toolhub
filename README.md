@@ -32,6 +32,8 @@ See [.env.example](.env.example). Highlights: `BASE_PATH`, `PORT`, `AUTH_MODE=no
 
 `AUTH_MODE=oidc` makes the hub an OIDC client (code flow + PKCE) of any standard provider. Register redirect URI `OIDC_REDIRECT_URI` (`{origin}{BASE_PATH}/auth/callback`) and make the ID token carry a `groups` claim (name configurable with `OIDC_GROUPS_CLAIM`). The session is a stateless signed cookie (HttpOnly, SameSite=Lax, `Path={BASE_PATH}`, Secure when the redirect URI is https), valid 8 hours.
 
+Set `OIDC_POST_LOGOUT_REDIRECT_URI` to `{origin}{BASE_PATH}/auth/signed-out` (a public page with a sign-in link) and register it with the provider. `OIDC_CLIENT_AUTH` is `post` (default) or `basic`. For a working setup against the Tunnus provider see [docs/tunnus.md](docs/tunnus.md).
+
 `GET {BASE_PATH}/auth/check` is a forward-auth endpoint: `200` with `X-Toolhub-User-Email` and `X-Toolhub-User-Groups`, or `401`. See [docker-compose.example.yml](docker-compose.example.yml).
 
 ## Guides and video

@@ -11,14 +11,14 @@ import * as client from 'openid-client';
  * }} OidcClient
  *
  * @param {{ issuerUrl: string, clientId: string, clientSecret?: string, redirectUri: string,
- *   postLogoutRedirectUri?: string, scope?: string }} opts
+ *   postLogoutRedirectUri?: string, scope?: string, clientAuth?: 'post'|'basic' }} opts
  * @returns {OidcClient}
  */
 export function createOidcClient(opts) {
   let configPromise;
   const getConfig = () => {
     configPromise ??= client
-      .discovery(new URL(opts.issuerUrl), opts.clientId, opts.clientSecret, undefined, {
+      .discovery(new URL(opts.issuerUrl), opts.clientId, opts.clientSecret, opts.clientAuth === 'basic' ? client.ClientSecretBasic(opts.clientSecret) : client.ClientSecretPost(opts.clientSecret), {
         execute: opts.issuerUrl.startsWith('http://') ? [client.allowInsecureRequests] : [],
       })
       .catch((err) => {

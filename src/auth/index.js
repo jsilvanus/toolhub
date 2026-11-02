@@ -1,5 +1,6 @@
 import express from 'express';
 import { sign, verify, parseCookies, cookie } from './session.js';
+import { layout, esc } from '../views.js';
 import { randomState, randomNonce, randomCodeVerifier } from './oidc.js';
 
 export const SESSION_COOKIE = 'toolhub_session';
@@ -47,6 +48,10 @@ export function authRouter(config, auth) {
   });
 
   if (auth.mode !== 'oidc' || !auth.oidc) return r;
+  r.get('/auth/signed-out', (_req, res) => {
+    const l = config.labels;
+    res.type('html').send(layout(config, { title: l.signedOut, body: `<p>${esc(l.signedOut)}</p><p><a href="${config.basePath}/auth/login">${esc(l.signIn)}</a></p>`, authMode: 'oidc' }));
+  });
   const oidc = auth.oidc;
 
   r.get('/auth/login', async (req, res, next) => {

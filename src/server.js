@@ -31,6 +31,7 @@ export function authFromEnv(e = env) {
       clientSecret: e.OIDC_CLIENT_SECRET,
       redirectUri: e.OIDC_REDIRECT_URI,
       postLogoutRedirectUri: e.OIDC_POST_LOGOUT_REDIRECT_URI,
+      clientAuth: e.OIDC_CLIENT_AUTH === 'basic' ? 'basic' : 'post',
     }),
   };
 }

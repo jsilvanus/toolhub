@@ -115,3 +115,14 @@ test('string groups claim is accepted; cookies parse', async () => {
     await h.close();
   }
 });
+
+test('signed-out page is public and links to login', async () => {
+  const h = await oidcHub({});
+  try {
+    const r = await fetch(`${h.url}/hub/auth/signed-out`);
+    assert.equal(r.status, 200);
+    assert.match(await r.text(), /href="\/hub\/auth\/login"/);
+  } finally {
+    await h.close();
+  }
+});
