@@ -1,0 +1,60 @@
+name: tunnus-e2e
+# Runs only on main: signs in to toolhub through the published Tunnus image.
+on:
+  push:
+    branches: [main]
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      # The OIDC provider image. Override per repository with the TUNNUS_IMAGE variable.
+      TUNNUS_IMAGE: ${{ vars.TUNNUS_IMAGE || 'ghcr.io/jsilvanus/tunnus:latest' }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tunnus
+          POSTGRES_PASSWORD: tunnus_password
+          POSTGRES_DB: tunnus
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U tunnus" --health-interval 5s --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - name: Pull Tunnus image
+        run: docker pull "$TUNNUS_IMAGE"
+      - name: Start Tunnus
+        run: |
+          docker run -d --name tunnus --network host \
+            -e ISSUER=http://127.0.0.1:4000/id -e PORT=4000 \
+            -e DATABASE_URL=postgres://tunnus:tunnus_password@127.0.0.1:5432/tunnus \
+            -e CLIENTS_FILE=/clients.json -e KEY_ENCRYPTION_SECRET=e2e-key-secret -e COOKIE_SECRETS=e2e-cookie-secret \
+            -e SIGNUP_EMAIL_ALLOW='*@example.org' -e DEFAULT_GROUPS=all -e MAIL_PROVIDER=console \
+            -v "$PWD/test/e2e/clients.json:/clients.json:ro" "$TUNNUS_IMAGE"
+          curl -sf --retry 30 --retry-delay 2 --retry-connrefused http://127.0.0.1:4000/id/.well-known/openid-configuration >/dev/null
+      - name: Start toolhub
+        run: |
+          nohup node src/server.js > toolhub.log 2>&1 &
+          curl -sf --retry 15 --retry-delay 1 --retry-connrefused http://127.0.0.1:3000/hub/health
+        env:
+          TOOLHUB_CONFIG: test/e2e/hub.config.js
+          BASE_PATH: /hub
+          PORT: '3000'
+          AUTH_MODE: oidc
+          SESSION_SECRET: e2e-session-secret-e2e-session-secret
+          OIDC_ISSUER_URL: http://127.0.0.1:4000/id
+          OIDC_CLIENT_ID: toolhub
+          OIDC_CLIENT_SECRET: e2e-client-secret
+          OIDC_REDIRECT_URI: http://127.0.0.1:3000/hub/auth/callback
+          OIDC_POST_LOGOUT_REDIRECT_URI: http://127.0.0.1:3000/hub/auth/signed-out
+      - name: Sign in through Tunnus
+        run: node test/e2e/tunnus-login.mjs
+      - name: Logs on failure
+        if: failure()
+        run: |
+          docker logs tunnus || true
+          cat toolhub.log || true
