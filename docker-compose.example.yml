@@ -1,0 +1,25 @@
+# Example: toolhub behind Traefik at https://tools.example.org/hub/ (no prefix stripping).
+services:
+  toolhub:
+    image: ghcr.io/example/toolhub:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BASE_PATH: /hub
+      TOOLHUB_CONFIG: /config/toolhub.config.js
+    volumes:
+      - ./config:/config:ro
+    networks: [traefik-public]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.http.routers.toolhub.rule=Host(`tools.example.org`) && PathPrefix(`/hub`)
+      - traefik.http.routers.toolhub.entrypoints=websecure
+      - traefik.http.routers.toolhub.tls.certresolver=letsencrypt
+      - traefik.http.services.toolhub.loadbalancer.server.port=3000
+      # Optional: protect another container with the hub's login via forward auth.
+      - traefik.http.middlewares.toolhub-auth.forwardauth.address=http://toolhub:3000/hub/auth/check
+      - traefik.http.middlewares.toolhub-auth.forwardauth.authResponseHeaders=X-Toolhub-User-Email,X-Toolhub-User-Groups
+networks:
+  traefik-public:
+    external: true
